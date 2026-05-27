@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alex Morgan — Portfolio</title>
+
+  <!-- Google Fonts: Syne (display) + DM Sans (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Syne', 'sans-serif'],
+            body: ['DM Sans', 'sans-serif'],
+          },
+          colors: {
+            bg:      '#0a0a0f',
+            surface: '#111118',
+            card:    '#16161f',
+            border:  '#1e1e2e',
+            accent:  '#7c6aff',
+            'accent-soft': '#a394ff',
+            muted:   '#5a5a7a',
+            text:    '#e2e2f0',
+          },
+          animation: {
+            'fade-up':   'fadeUp 0.8s ease forwards',
+            'fade-in':   'fadeIn 1s ease forwards',
+            'blink':     'blink 1s step-start infinite',
+          },
+          keyframes: {
+            fadeUp: {
+              '0%':   { opacity: '0', transform: 'translateY(28px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            fadeIn: {
+              '0%':   { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            blink: {
+              '0%, 100%': { opacity: '1' },
+              '50%':      { opacity: '0' },
+            },
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* ── Base ── */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { background: #0a0a0f; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #0a0a0f;
+      color: #e2e2f0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Noise overlay ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.35;
+    }
+
+    /* ── Glow blobs ── */
+    .glow-blob {
+      position: absolute; border-radius: 50%;
+      filter: blur(120px); pointer-events: none; z-index: 0;
+    }
+
+    /* ── Section entrance animations (JS driven) ── */
+    .reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+
+    /* ── Nav pill ── */
+    .nav-link {
+      position: relative; font-size: 0.85rem; letter-spacing: 0.04em;
+      color: #5a5a7a; transition: color 0.25s;
+    }
+    .nav-link:hover { color: #e2e2f0; }
+    .nav-link::after {
+      content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 1px;
+      background: #7c6aff; transition: width 0.3s ease;
+    }
+    .nav-link:hover::after { width: 100%; }
+
+    /* ── Typing cursor ── */
+    .cursor { display: inline-block; animation: blink 1s step-start infinite; color: #7c6aff; }
+
+    /* ── Project cards ── */
+    .project-card {
+      background: #16161f;
+      border: 1px solid #1e1e2e;
+      border-radius: 16px;
+      overflow: hidden;
+      transition: transform 0.35s cubic-bezier(.22,.68,0,1.2),
+                  box-shadow 0.35s ease,
+                  border-color 0.35s ease;
+    }
+    .project-card:hover {
+      transform: translateY(-6px) scale(1.015);
+      box-shadow: 0 24px 60px rgba(124, 106, 255, 0.15);
+      border-color: #7c6aff;
+    }
+    .project-card:hover .card-img {
+      transform: scale(1.06);
+    }
+    .card-img {
+      width: 100%; height: 200px; object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+
+    /* ── Skill pills ── */
+    .pill {
+      display: inline-block; padding: 4px 14px; border-radius: 999px;
+      font-size: 0.78rem; font-weight: 500; letter-spacing: 0.03em;
+      border: 1px solid #1e1e2e; background: #111118; color: #a394ff;
+    }
+
+    /* ── CTA button ── */
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 32px; border-radius: 999px;
+      background: #7c6aff; color: #fff; font-weight: 500;
+      font-size: 0.95rem; letter-spacing: 0.02em;
+      transition: background 0.25s, box-shadow 0.25s, transform 0.2s;
+      box-shadow: 0 0 0 0 rgba(124,106,255,0.5);
+    }
+    .btn-primary:hover {
+      background: #6b58f0;
+      box-shadow: 0 8px 32px rgba(124,106,255,0.45);
+      transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 28px; border-radius: 999px;
+      border: 1px solid #1e1e2e; color: #a394ff; font-weight: 500;
+      font-size: 0.9rem;
+      transition: border-color 0.25s, background 0.25s, transform 0.2s;
+    }
+    .btn-outline:hover {
+      border-color: #7c6aff; background: rgba(124,106,255,0.08);
+      transform: translateY(-2px);
+    }
+
+    /* ── Social icon buttons ── */
+    .social-btn {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid #1e1e2e; color: #5a5a7a;
+      transition: border-color 0.25s, color 0.25s, background 0.25s, transform 0.25s;
+    }
+    .social-btn:hover {
+      border-color: #7c6aff; color: #a394ff;
+      background: rgba(124,106,255,0.1); transform: translateY(-3px);
+    }
+
+    /* ── Divider ── */
+    .section-divider {
+      width: 48px; height: 3px; border-radius: 99px;
+      background: linear-gradient(90deg, #7c6aff, transparent);
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #0a0a0f; }
+    ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 99px; }
+  </style>
+</head>
+
+<body class="relative overflow-x-hidden">
+
+  <!-- ═══════════════════════════════ NAV ═══════════════════════════════ -->
+  <nav class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 h-16"
+       style="background: rgba(10,10,15,0.8); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(30,30,46,0.6);">
+    <a href="#hero" class="font-display text-xl font-bold tracking-tight text-white">
+      AM<span class="text-accent">.</span>
+    </a>
+    <div class="hidden md:flex items-center gap-8">
+      <a href="#about"    class="nav-link">About</a>
+      <a href="#projects" class="nav-link">Projects</a>
+      <a href="#contact"  class="nav-link">Contact</a>
+    </div>
+    <a href="#contact" class="btn-primary py-2 px-5 text-sm">Hire Me</a>
+  </nav>
+
+
+  <!-- ═══════════════════════════════ HERO ════════════════════════════════ -->
+  <section id="hero" class="relative min-h-screen flex flex-col items-center justify-center px-6 text-center overflow-hidden">
+
+    <!-- ambient glows -->
+    <div class="glow-blob w-96 h-96 bg-accent opacity-20 top-10 -left-24"  style="position:absolute;"></div>
+    <div class="glow-blob w-80 h-80 bg-purple-700 opacity-10 bottom-20 -right-20" style="position:absolute;"></div>
+
+    <!-- availability badge -->
+    <div class="animate-fade-in opacity-0 flex items-center gap-2 mb-8 px-4 py-2 rounded-full border border-border bg-surface text-sm text-muted"
+         style="animation-fill-mode:forwards; animation-delay:0.2s;">
+      <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+      Available for new projects
+    </div>
+
+    <!-- name / role -->
+    <h1 class="font-display font-extrabold text-5xl md:text-7xl lg:text-8xl leading-none tracking-tight text-white animate-fade-up opacity-0"
+        style="animation-fill-mode:forwards; animation-delay:0.4s;">
+      Alex Morgan
+    </h1>
+
+    <p class="mt-5 text-2xl md:text-3xl font-light text-muted animate-fade-up opacity-0"
+       style="animation-fill-mode:forwards; animation-delay:0.6s;">
+      <span id="typed-role"></span><span class="cursor">|</span>
+    </p>
+
+    <p class="mt-6 max-w-xl text-base md:text-lg text-muted leading-relaxed animate-fade-up opacity-0"
+       style="animation-fill-mode:forwards; animation-delay:0.8s;">
+      I craft elegant digital experiences — from pixel-perfect interfaces to rock-solid backends.
+      Let's build something remarkable together.
+    </p>
+
+    <div class="mt-10 flex flex-wrap items-center justify-center gap-4 animate-fade-up opacity-0"
+         style="animation-fill-mode:forwards; animation-delay:1s;">
+      <a href="#projects" class="btn-primary">
+        View My Work <i class="fa-solid fa-arrow-right text-xs"></i>
+      </a>
+      <a href="#contact" class="btn-outline">
+        Get In Touch
+      </a>
+    </div>
+
+    <!-- scroll hint -->
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-muted text-xs animate-fade-in opacity-0"
+         style="animation-fill-mode:forwards; animation-delay:1.4s;">
+      <span>Scroll</span>
+      <i class="fa-solid fa-chevron-down animate-bounce text-accent"></i>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════ ABOUT ═══════════════════════════════ -->
+  <section id="about" class="relative py-28 px-6 md:px-12 max-w-6xl mx-auto">
+    <div class="glow-blob w-72 h-72 bg-accent opacity-10 top-0 right-0" style="position:absolute;"></div>
+
+    <div class="grid md:grid-cols-2 gap-16 items-center">
+
+      <!-- image side -->
+      <div class="reveal relative">
+        <div class="absolute inset-0 rounded-2xl bg-accent opacity-10 blur-3xl scale-90 translate-y-4"></div>
+        <img src="https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=600&q=80"
+             alt="Alex Morgan"
+             class="relative w-full rounded-2xl object-cover aspect-square border border-border" />
+        <!-- floating stat card -->
+        <div class="absolute -bottom-5 -right-5 bg-card border border-border rounded-xl px-5 py-4 shadow-2xl">
+          <p class="text-3xl font-display font-bold text-white">5+</p>
+          <p class="text-xs text-muted mt-0.5">Years of Experience</p>
+        </div>
+      </div>
+
+      <!-- text side -->
+      <div>
+        <p class="reveal text-xs font-medium tracking-widest uppercase text-accent mb-3">About Me</p>
+        <div class="section-divider reveal mb-6"></div>
+        <h2 class="reveal font-display font-bold text-3xl md:text-4xl text-white leading-tight mb-6">
+          Building things for the web, with care.
+        </h2>
+        <p class="reveal reveal-delay-1 text-muted leading-relaxed mb-4">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque ornare scelerisque erat vel hendrerit.
+          Nam porta, erat sit amet venenatis luctus, augue libero ultrices quam, ut congue nisi lorem in leo.
+        </p>
+        <p class="reveal reveal-delay-2 text-muted leading-relaxed mb-8">
+          Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
+          Curabitur blandit tempus porttitor. Vivamus sagittis lacus vel augue laoreet.
+        </p>
+
+        <!-- skills -->
+        <div class="reveal reveal-delay-3 flex flex-wrap gap-2">
+          <span class="pill">React</span>
+          <span class="pill">TypeScript</span>
+          <span class="pill">Node.js</span>
+          <span class="pill">Figma</span>
+          <span class="pill">Tailwind CSS</span>
+          <span class="pill">PostgreSQL</span>
+          <span class="pill">Next.js</span>
+          <span class="pill">GraphQL</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════ PROJECTS ════════════════════════════ -->
+  <section id="projects" class="py-28 px-6 md:px-12 max-w-6xl mx-auto">
+
+    <div class="text-center mb-16">
+      <p class="reveal text-xs font-medium tracking-widest uppercase text-accent mb-3">Work</p>
+      <div class="section-divider reveal mx-auto mb-6"></div>
+      <h2 class="reveal font-display font-bold text-3xl md:text-4xl text-white">Selected Projects</h2>
+      <p class="reveal reveal-delay-1 text-muted mt-4 max-w-lg mx-auto">
+        A handful of things I've built — each one a chance to push the craft a little further.
+      </p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- Card 1 -->
+      <div class="project-card reveal">
+        <div class="overflow-hidden">
+          <img class="card-img"
+               src="https://images.unsplash.com/photo-1551650975-87deedd944c3?w=600&q=80"
+               alt="Project Orion" />
+        </div>
+        <div class="p-6">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="pill">React</span>
+            <span class="pill">Stripe</span>
+          </div>
+          <h3 class="font-display font-bold text-lg text-white mb-2">Project Orion</h3>
+          <p class="text-muted text-sm leading-relaxed mb-5">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce tincidunt justo eget augue interdum, sit amet aliquam.
+          </p>
+          <div class="flex gap-3">
+            <a href="#" class="text-xs font-medium text-accent-soft hover:text-white transition-colors flex items-center gap-1">
+              Live Demo <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+            </a>
+            <a href="#" class="text-xs font-medium text-muted hover:text-white transition-colors flex items-center gap-1">
+              GitHub <i class="fa-brands fa-github text-[10px]"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="project-card reveal reveal-delay-1">
+        <div class="overflow-hidden">
+          <img class="card-img"
+               src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&q=80"
+               alt="Project Nebula" />
+        </div>
+        <div class="p-6">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="pill">Next.js</span>
+            <span class="pill">Prisma</span>
+          </div>
+          <h3 class="font-display font-bold text-lg text-white mb-2">Project Nebula</h3>
+          <p class="text-muted text-sm leading-relaxed mb-5">
+            Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium totam.
+          </p>
+          <div class="flex gap-3">
+            <a href="#" class="text-xs font-medium text-accent-soft hover:text-white transition-colors flex items-center gap-1">
+              Live Demo <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+            </a>
+            <a href="#" class="text-xs font-medium text-muted hover:text-white transition-colors flex items-center gap-1">
+              GitHub <i class="fa-brands fa-github text-[10px]"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="project-card reveal reveal-delay-2">
+        <div class="overflow-hidden">
+          <img class="card-img"
+               src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&q=80"
+               alt="Project Solstice" />
+        </div>
+        <div class="p-6">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="pill">Vue</span>
+            <span class="pill">GraphQL</span>
+          </div>
+          <h3 class="font-display font-bold text-lg text-white mb-2">Project Solstice</h3>
+          <p class="text-muted text-sm leading-relaxed mb-5">
+            At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum.
+          </p>
+          <div class="flex gap-3">
+            <a href="#" class="text-xs font-medium text-accent-soft hover:text-white transition-colors flex items-center gap-1">
+              Live Demo <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+            </a>
+            <a href="#" class="text-xs font-medium text-muted hover:text-white transition-colors flex items-center gap-1">
+              GitHub <i class="fa-brands fa-github text-[10px]"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════ CONTACT / FOOTER ════════════════════ -->
+  <footer id="contact" class="relative py-28 px-6 text-center overflow-hidden border-t border-border">
+    <div class="glow-blob w-96 h-96 bg-accent opacity-10 bottom-0 left-1/2 -translate-x-1/2" style="position:absolute;"></div>
+
+    <div class="relative max-w-xl mx-auto">
+      <p class="reveal text-xs font-medium tracking-widest uppercase text-accent mb-3">Contact</p>
+      <div class="section-divider reveal mx-auto mb-6"></div>
+      <h2 class="reveal font-display font-bold text-3xl md:text-5xl text-white leading-tight mb-4">
+        Let's build something<br/>great together.
+      </h2>
+      <p class="reveal reveal-delay-1 text-muted mb-10 leading-relaxed">
+        I'm always open to interesting projects and collaborations. Drop me a line — I'd love to chat.
+      </p>
+
+      <a href="mailto:hello@alexmorgan.dev" class="reveal reveal-delay-2 btn-primary mb-12 inline-flex">
+        <i class="fa-solid fa-envelope text-sm"></i>
+        hello@alexmorgan.dev
+      </a>
+
+      <!-- social icons -->
+      <div class="reveal reveal-delay-3 flex items-center justify-center gap-4 mt-8">
+        <a href="#" aria-label="GitHub"   class="social-btn"><i class="fa-brands fa-github"></i></a>
+        <a href="#" aria-label="LinkedIn" class="social-btn"><i class="fa-brands fa-linkedin-in"></i></a>
+        <a href="#" aria-label="X/Twitter" class="social-btn"><i class="fa-brands fa-x-twitter"></i></a>
+        <a href="#" aria-label="Dribbble" class="social-btn"><i class="fa-brands fa-dribbble"></i></a>
+      </div>
+
+      <p class="mt-14 text-xs text-muted">
+        © <span id="year"></span> Alex Morgan. Designed & built with care.
+      </p>
+    </div>
+  </footer>
+
+
+  <!-- ═══════════════════════════════ SCRIPTS ══════════════════════════════ -->
+  <script>
+    /* ── Year ── */
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    /* ── Typing effect ── */
+    const roles = ['Full-Stack Developer', 'UI/UX Designer', 'Creative Coder', 'Problem Solver'];
+    let roleIndex = 0, charIndex = 0, deleting = false;
+    const typedEl = document.getElementById('typed-role');
+
+    function type() {
+      const current = roles[roleIndex];
+      if (!deleting) {
+        typedEl.textContent = current.slice(0, ++charIndex);
+        if (charIndex === current.length) { deleting = true; return setTimeout(type, 1800); }
+      } else {
+        typedEl.textContent = current.slice(0, --charIndex);
+        if (charIndex === 0) { deleting = false; roleIndex = (roleIndex + 1) % roles.length; }
+      }
+      setTimeout(type, deleting ? 50 : 90);
+    }
+    setTimeout(type, 1200);
+
+    /* ── Scroll reveal ── */
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
