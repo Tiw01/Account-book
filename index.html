@@ -51,19 +51,19 @@
     position: relative;
   }
   #ledger-root.dark {
-    --ink: #ece6d8;
-    --paper: #1b2320;
-    --paper-line: #33403a;
-    --teal: #3f9c86;
-    --teal-deep: #142521;
-    --gold: #d9a95a;
-    --gold-soft: #e8c98a;
-    --red: #e2695f;
-    --green: #5cb98a;
-    --muted: #9aa39a;
-    --card-bg: #232c28;
-    --hover-bg: rgba(217,169,90,0.08);
-    --page-bg: #101512;
+    --ink: #d9d3c5;
+    --paper: #181d1a;
+    --paper-line: #2b332e;
+    --teal: #2f6e5f;
+    --teal-deep: #101b17;
+    --gold: #c9a15f;
+    --gold-soft: #ddc290;
+    --red: #d17a70;
+    --green: #6bab8c;
+    --muted: #8b9289;
+    --card-bg: #1f2521;
+    --hover-bg: rgba(201,161,95,0.07);
+    --page-bg: #0d100e;
   }
   #ledger-root * { box-sizing: border-box; }
 
@@ -77,6 +77,10 @@
   .lb-streak { font-size: 12px; background: rgba(230,201,138,0.18); color: var(--gold-soft); padding: 4px 10px; border-radius: 20px; font-weight: 700; white-space: nowrap; }
   .lb-theme-btn { border: 1px solid rgba(245,239,225,0.3); background: rgba(245,239,225,0.08); color: var(--paper); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 15px; display:flex; align-items:center; justify-content:center; flex: none; }
   .lb-headrow-right { display:flex; align-items:center; gap:8px; }
+  .lb-userchip { display:flex; align-items:center; gap:8px; margin-top:10px; font-size:12px; color: rgba(245,239,225,0.85); }
+  .lb-userchip img { width:22px; height:22px; border-radius:50%; }
+  .lb-userchip span { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lb-userchip button { border:1px solid rgba(245,239,225,0.25); background:rgba(245,239,225,0.06); color:inherit; font-size:11px; padding:4px 9px; border-radius:20px; cursor:pointer; flex:none; }
 
   .lb-lock-overlay { position: fixed; inset: 0; background: linear-gradient(155deg, #14453d 0%, #0b2b26 100%); display:flex; align-items:center; justify-content:center; z-index: 100; padding: 20px; }
   .lb-lock-card { background: var(--paper); border-radius: 16px; padding: 28px 24px; max-width: 340px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.35); text-align:center; }
@@ -298,9 +302,61 @@
   }
 </style>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAufKbsgj6dfxCIjhOzoll9gWCOGtm52qo",
+  authDomain: "account-book-efb33.firebaseapp.com",
+  projectId: "account-book-efb33",
+  storageBucket: "account-book-efb33.firebasestorage.app",
+  messagingSenderId: "666984933585",
+  appId: "1:666984933585:web:f3fcae53687e82ddecbdf0",
+  measurementId: "G-EYRV1H9XTJ"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+const googleProvider = new GoogleAuthProvider();
+
 (function(){
   const root = document.getElementById('ledger-root');
+
+  let currentUser = null; // { uid, email, displayName, photoURL }
+
+  // Persistent storage: backed by Firestore, one document per signed-in user
+  // (users/{uid}), each app data section stored as a field on that document.
+  const storage = {
+    async get(key){
+      if (!currentUser) throw new Error('not signed in');
+      const snap = await getDoc(doc(db, 'users', currentUser.uid));
+      if (!snap.exists()) throw new Error('no data yet');
+      const data = snap.data();
+      if (!(key in data)) throw new Error('key not found');
+      return { key, value: data[key] };
+    },
+    async set(key, value){
+      if (!currentUser) throw new Error('not signed in');
+      await setDoc(doc(db, 'users', currentUser.uid), { [key]: value }, { merge: true });
+      return { key, value };
+    }
+  };
+
+  async function signInGoogle(){
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch(e) {
+      console.error(e);
+      alert('เข้าสู่ระบบไม่สำเร็จ ลองใหม่อีกครั้ง');
+    }
+  }
+
+  async function signOutGoogle(){
+    await fbSignOut(auth);
+  }
 
   const DEFAULT_CATS = {
     income: ['เงินเดือน', 'โบนัส', 'รายได้พิเศษ', 'อื่นๆ'],
@@ -334,18 +390,15 @@
   let goals = [];
   let recurring = [];
   let theme = 'light';
-  let authEmail = null;
   let unlocked = false;
-  let lockInput = '';
-  let lockError = '';
-  let setupInput = '';
+  let authLoading = true;
   let dismissedDue = new Set();
   let recForm = { name: '', type: 'expense', category: '', amount: '', day: 1, necessary: 1 };
   let goalForm = { name: '', target: '', due: '' };
 
   function applyTheme(){
     root.classList.toggle('dark', theme === 'dark');
-    document.body.style.background = theme === 'dark' ? '#0c0f0d' : '#efe6cf';
+    document.body.style.background = theme === 'dark' ? '#0d100e' : '#efe6cf';
   }
 
   function pad(n){ return String(n).padStart(2,'0'); }
@@ -509,24 +562,22 @@
     return due;
   }
 
-  async function saveEntries(){ try { await window.storage.set('ledger_entries', JSON.stringify(entries)); } catch(e){ console.error(e); } }
-  async function saveCats(){ try { await window.storage.set('ledger_categories', JSON.stringify(customCats)); } catch(e){ console.error(e); } }
-  async function saveBudget(){ try { await window.storage.set('ledger_settings', JSON.stringify({budget, usdRate})); } catch(e){ console.error(e); } }
-  async function saveAssets(){ try { await window.storage.set('ledger_assets', JSON.stringify(assets)); } catch(e){ console.error(e); } }
-  async function saveGoals(){ try { await window.storage.set('ledger_goals', JSON.stringify(goals)); } catch(e){ console.error(e); } }
-  async function saveRecurring(){ try { await window.storage.set('ledger_recurring', JSON.stringify(recurring)); } catch(e){ console.error(e); } }
-  async function saveTheme(){ try { await window.storage.set('ledger_theme', theme); } catch(e){ console.error(e); } }
-  async function saveAuth(){ try { await window.storage.set('ledger_auth', JSON.stringify({email: authEmail})); } catch(e){ console.error(e); } }
+  async function saveEntries(){ try { await storage.set('ledger_entries', JSON.stringify(entries)); } catch(e){ console.error(e); } }
+  async function saveCats(){ try { await storage.set('ledger_categories', JSON.stringify(customCats)); } catch(e){ console.error(e); } }
+  async function saveBudget(){ try { await storage.set('ledger_settings', JSON.stringify({budget, usdRate})); } catch(e){ console.error(e); } }
+  async function saveAssets(){ try { await storage.set('ledger_assets', JSON.stringify(assets)); } catch(e){ console.error(e); } }
+  async function saveGoals(){ try { await storage.set('ledger_goals', JSON.stringify(goals)); } catch(e){ console.error(e); } }
+  async function saveRecurring(){ try { await storage.set('ledger_recurring', JSON.stringify(recurring)); } catch(e){ console.error(e); } }
+  async function saveTheme(){ try { await storage.set('ledger_theme', theme); } catch(e){ console.error(e); } }
 
   async function loadAll(){
-    try { const r = await window.storage.get('ledger_entries'); entries = r && r.value ? JSON.parse(r.value) : []; } catch(e){ entries = []; }
-    try { const r = await window.storage.get('ledger_categories'); customCats = r && r.value ? JSON.parse(r.value) : {income:[],expense:[]}; } catch(e){ customCats = {income:[],expense:[]}; }
-    try { const r = await window.storage.get('ledger_settings'); const s = r && r.value ? JSON.parse(r.value) : {}; budget = s.budget || null; usdRate = s.usdRate || 36; } catch(e){ budget = null; usdRate = 36; }
-    try { const r = await window.storage.get('ledger_assets'); assets = r && r.value ? JSON.parse(r.value) : []; } catch(e){ assets = []; }
-    try { const r = await window.storage.get('ledger_goals'); goals = r && r.value ? JSON.parse(r.value) : []; } catch(e){ goals = []; }
-    try { const r = await window.storage.get('ledger_recurring'); recurring = r && r.value ? JSON.parse(r.value) : []; } catch(e){ recurring = []; }
-    try { const r = await window.storage.get('ledger_theme'); theme = r && r.value ? r.value : 'light'; } catch(e){ theme = 'light'; }
-    try { const r = await window.storage.get('ledger_auth'); const a = r && r.value ? JSON.parse(r.value) : {}; authEmail = a.email || null; } catch(e){ authEmail = null; }
+    try { const r = await storage.get('ledger_entries'); entries = r && r.value ? JSON.parse(r.value) : []; } catch(e){ entries = []; }
+    try { const r = await storage.get('ledger_categories'); customCats = r && r.value ? JSON.parse(r.value) : {income:[],expense:[]}; } catch(e){ customCats = {income:[],expense:[]}; }
+    try { const r = await storage.get('ledger_settings'); const s = r && r.value ? JSON.parse(r.value) : {}; budget = s.budget || null; usdRate = s.usdRate || 36; } catch(e){ budget = null; usdRate = 36; }
+    try { const r = await storage.get('ledger_assets'); assets = r && r.value ? JSON.parse(r.value) : []; } catch(e){ assets = []; }
+    try { const r = await storage.get('ledger_goals'); goals = r && r.value ? JSON.parse(r.value) : []; } catch(e){ goals = []; }
+    try { const r = await storage.get('ledger_recurring'); recurring = r && r.value ? JSON.parse(r.value) : []; } catch(e){ recurring = []; }
+    try { const r = await storage.get('ledger_theme'); theme = r && r.value ? r.value : 'light'; } catch(e){ theme = 'light'; }
     applyTheme();
     render();
   }
@@ -603,68 +654,26 @@
   let formVals = { date: todayStr(), amount: '', note: '' };
   let editingEntryCat = null;
 
-  function setupScreenHtml(){
+  function signinScreenHtml(){
     return `
       <div class="lb-lock-overlay">
         <div class="lb-lock-card">
-          <div class="lb-lock-icon">📧</div>
-          <h3>ตั้งอีเมลสำหรับล็อกสมุดบัญชี</h3>
-          <p>ใส่อีเมลที่จะใช้เป็นกุญแจเข้าใช้งาน ทุกครั้งที่เปิดต้องกรอกอีเมลนี้ให้ตรงถึงจะเข้าได้ (ข้อมูลเก็บในเครื่องนี้เท่านั้น ไม่ใช่การยืนยันตัวตนจริง เหมาะกับกันคนอื่นเปิดดูโดยบังเอิญ)</p>
-          <input type="email" id="lb-setup-email" placeholder="you@email.com" value="${escapeHtml(setupInput)}">
-          <button id="lb-setup-save">ตั้งค่าและเข้าใช้งาน</button>
-          <div class="lb-lock-hint"><button id="lb-setup-skip">ข้ามไปก่อน ไม่ต้องล็อก</button></div>
-        </div>
-      </div>
-    `;
-  }
-
-  function lockScreenHtml(){
-    return `
-      <div class="lb-lock-overlay">
-        <div class="lb-lock-card">
-          <div class="lb-lock-icon">🔒</div>
-          <h3>สมุดบัญชีถูกล็อกไว้</h3>
-          <p>กรอกอีเมลที่ตั้งไว้เพื่อเข้าใช้งาน</p>
-          <input type="email" id="lb-lock-email" placeholder="you@email.com" value="${escapeHtml(lockInput)}">
-          ${lockError ? `<div class="lb-lock-error">${lockError}</div>` : ''}
-          <button id="lb-lock-unlock">ปลดล็อก</button>
-          <div class="lb-lock-hint"><button id="lb-lock-reset">ลืมอีเมล? ล้างค่าล็อกทั้งหมด</button></div>
+          <div class="lb-lock-icon">📘</div>
+          <h3>สมุดบัญชีรายรับ-รายจ่าย</h3>
+          <p>เข้าสู่ระบบด้วย Google เพื่อซิงค์ข้อมูลข้ามเครื่อง ข้อมูลจะถูกบันทึกในคลาวด์อัตโนมัติ และเห็นเฉพาะบัญชีของคุณเท่านั้น</p>
+          <button id="lb-google-signin" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#3c4043;border:1px solid var(--paper-line)">
+            <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72A5.4 5.4 0 0 1 3.69 9c0-.6.1-1.18.28-1.72V4.95H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.05l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.59-2.59C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+            เข้าสู่ระบบด้วย Google
+          </button>
+          ${authLoading===false ? '' : ''}
         </div>
       </div>
     `;
   }
 
   function bindLockEvents(){
-    const setupSave = root.querySelector('#lb-setup-save');
-    if (setupSave) setupSave.addEventListener('click', async () => {
-      const val = root.querySelector('#lb-setup-email').value.trim();
-      if (!val || !val.includes('@')) return;
-      authEmail = val;
-      unlocked = true;
-      await saveAuth();
-      render();
-    });
-    const setupSkip = root.querySelector('#lb-setup-skip');
-    if (setupSkip) setupSkip.addEventListener('click', () => { unlocked = true; render(); });
-
-    const lockUnlock = root.querySelector('#lb-lock-unlock');
-    if (lockUnlock) lockUnlock.addEventListener('click', () => {
-      const val = root.querySelector('#lb-lock-email').value.trim();
-      if (val.toLowerCase() === (authEmail||'').toLowerCase()) {
-        unlocked = true; lockError = ''; render();
-      } else {
-        lockError = 'อีเมลไม่ตรงกับที่ตั้งไว้ ลองใหม่อีกครั้ง';
-        lockInput = val;
-        render();
-      }
-    });
-    const lockReset = root.querySelector('#lb-lock-reset');
-    if (lockReset) lockReset.addEventListener('click', async () => {
-      if (!confirm('การล้างค่าล็อกจะลบการล็อกอีเมล (ข้อมูลรายการเงินยังอยู่ครบ) ยืนยันหรือไม่?')) return;
-      authEmail = null; unlocked = false; lockError = '';
-      await saveAuth();
-      render();
-    });
+    const signinBtn = root.querySelector('#lb-google-signin');
+    if (signinBtn) signinBtn.addEventListener('click', signInGoogle);
   }
 
   function render(){
@@ -1070,6 +1079,13 @@
               <button class="lb-theme-btn" id="lb-theme-toggle" title="สลับโหมดมืด/สว่าง">${theme==='dark'?'☀️':'🌙'}</button>
             </div>
           </div>
+          ${currentUser ? `
+            <div class="lb-userchip">
+              ${currentUser.photoURL ? `<img src="${currentUser.photoURL}" alt="">` : '👤'}
+              <span>${escapeHtml(currentUser.displayName || currentUser.email || '')}</span>
+              <button id="lb-signout" title="ออกจากระบบ">ออกจากระบบ</button>
+            </div>
+          ` : ''}
           <div class="lb-balance-row">
             <span class="lb-balance-label">เงินสดคงเหลือ</span>
             <span class="lb-balance-amt">${fmt(totalBalance)} ฿</span>
@@ -1091,14 +1107,15 @@
 
         ${bodyHtml}
 
-        <div class="lb-footer">บันทึกอัตโนมัติในเครื่องนี้ • เห็นเฉพาะคุณ</div>
+        <div class="lb-footer">ข้อมูลซิงค์กับบัญชี Google ของคุณอัตโนมัติ • เห็นเฉพาะคุณ</div>
         ${modalHtml}
       </div>
-      ${(!unlocked && authEmail) ? lockScreenHtml() : ''}
-      ${(!unlocked && !authEmail) ? setupScreenHtml() : ''}
+      ${(!unlocked && !authLoading) ? signinScreenHtml() : ''}
     `;
 
     bindLockEvents();
+    const signoutBtn = root.querySelector('#lb-signout');
+    if (signoutBtn) signoutBtn.addEventListener('click', signOutGoogle);
     if (!unlocked) return;
 
     root.querySelector('#lb-export').addEventListener('click', downloadJSON);
@@ -1383,7 +1400,22 @@
   }
 
   root.innerHTML = `<div class="lb-empty"><b>กำลังโหลด…</b></div>`;
-  loadAll();
+
+  onAuthStateChanged(auth, async (user) => {
+    authLoading = false;
+    if (user) {
+      currentUser = { uid: user.uid, email: user.email, displayName: user.displayName, photoURL: user.photoURL };
+      unlocked = true;
+      await loadAll();
+    } else {
+      currentUser = null;
+      unlocked = false;
+      entries = []; customCats = {income:[],expense:[]}; budget = null; assets = [];
+      goals = []; recurring = []; theme = 'light';
+      applyTheme();
+      render();
+    }
+  });
 })();
 </script>
 
