@@ -304,7 +304,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut as fbSignOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut as fbSignOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -347,10 +347,17 @@ const googleProvider = new GoogleAuthProvider();
 
   async function signInGoogle(){
     try {
-      await signInWithRedirect(auth, googleProvider);
+      await signInWithPopup(auth, googleProvider);
     } catch(e) {
       console.error(e);
-      alert('เข้าสู่ระบบไม่สำเร็จ: ' + (e && e.message ? e.message : 'ลองใหม่อีกครั้ง'));
+      if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request')) {
+        try { await signInWithRedirect(auth, googleProvider); return; } catch(e2) { console.error(e2); }
+      }
+      if (e && e.code === 'auth/unauthorized-domain') {
+        alert('โดเมนนี้ยังไม่ได้รับอนุญาตให้ล็อกอิน กรุณาเพิ่ม ' + location.hostname + ' ใน Firebase Console → Authentication → Settings → Authorized domains');
+      } else if (e && e.code && e.code !== 'auth/popup-closed-by-user') {
+        alert('เข้าสู่ระบบไม่สำเร็จ (' + e.code + ')');
+      }
     }
   }
 
@@ -1400,15 +1407,6 @@ const googleProvider = new GoogleAuthProvider();
   }
 
   root.innerHTML = `<div class="lb-empty"><b>กำลังโหลด…</b></div>`;
-
-  getRedirectResult(auth).catch((e) => {
-    console.error('redirect sign-in error', e);
-    if (e && e.code === 'auth/unauthorized-domain') {
-      alert('โดเมนนี้ยังไม่ได้รับอนุญาตให้ล็อกอิน กรุณาเพิ่ม ' + location.hostname + ' ใน Firebase Console → Authentication → Settings → Authorized domains');
-    } else if (e && e.code) {
-      alert('เข้าสู่ระบบไม่สำเร็จ (' + e.code + ')');
-    }
-  });
 
   onAuthStateChanged(auth, async (user) => {
     authLoading = false;
