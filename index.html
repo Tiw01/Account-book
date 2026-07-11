@@ -270,7 +270,10 @@
   .goal-del { font-size:11px; color:var(--red); background:none; border:none; cursor:pointer; margin-top:8px; font-weight:700; padding:0; }
   .goal-done { font-size: 11px; font-weight: 700; color: var(--green); background: rgba(47,107,79,0.14); padding: 2px 8px; border-radius: 20px; }
 
-  .rec-card { background: var(--card-bg); border: 1px solid var(--paper-line); border-radius: 10px; padding: 11px 14px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .rec-card { background: var(--card-bg); border: 1px solid var(--paper-line); border-radius: 10px; padding: 11px 14px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; }
+  .rec-day-edit { display:flex; align-items:center; gap:5px; font-size: 11.5px; color: var(--muted); margin-top: 3px; flex-wrap: wrap; }
+  .rec-day-input { width: 46px; font-family: inherit; font-size: 12px; padding: 4px 5px; border-radius: 6px; border: 1px solid var(--paper-line); background: var(--card-bg); color: var(--ink); text-align: center; }
+  .rec-day-save { border: 1px solid var(--paper-line); background: var(--card-bg); color: var(--teal); font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 6px; cursor: pointer; }
   .rec-info { min-width:0; }
   .rec-name { font-weight: 700; font-size: 13.5px; }
   .rec-meta { font-size: 11.5px; color: var(--muted); margin-top:2px; }
@@ -940,7 +943,12 @@
             <div class="rec-card">
               <div class="rec-info">
                 <div class="rec-name">${escapeHtml(r.name)}</div>
-                <div class="rec-meta">ทุกวันที่ ${r.day} ของเดือน · ${r.category}</div>
+                <div class="rec-day-edit">
+                  <span>เก็บทุกวันที่</span>
+                  <input type="number" class="rec-day-input" data-recid="${r.id}" min="1" max="28" value="${r.day}">
+                  <span>ของเดือน</span>
+                  <button type="button" class="rec-day-save" data-recid="${r.id}">บันทึก</button>
+                </div>
               </div>
               <span class="rec-amt ${r.type}">${r.type==='income'?'+':'-'}${fmt(r.amount)}</span>
               <button class="rec-del" data-recid="${r.id}" title="ลบรายการประจำนี้">✕</button>
@@ -1283,6 +1291,16 @@
       });
       root.querySelectorAll('.rec-del').forEach(btn => btn.addEventListener('click', async () => {
         recurring = recurring.filter(r => r.id !== btn.dataset.recid);
+        await saveRecurring();
+        render();
+      }));
+      root.querySelectorAll('.rec-day-save').forEach(btn => btn.addEventListener('click', async () => {
+        const rid = btn.dataset.recid;
+        const input = root.querySelector(`.rec-day-input[data-recid="${rid}"]`);
+        const day = Math.min(28, Math.max(1, parseInt(input.value) || 1));
+        const r = recurring.find(x => x.id === rid);
+        if (!r) return;
+        r.day = day;
         await saveRecurring();
         render();
       }));
