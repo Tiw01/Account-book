@@ -1,0 +1,17 @@
+{
+  "name": "สมุดบัญชีรายรับ-รายจ่าย",
+  "short_name": "รายรับ-รายจ่าย",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#efe6cf",
+  "theme_color": "#0b2b26",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiB2aWV3Qm94PSIwIDAgMTgwIDE4MCI+PHJlY3Qgd2lkdGg9IjE4MCIgaGVpZ2h0PSIxODAiIHJ4PSIzOCIgZmlsbD0iIzBiMmIyNiIvPjxyZWN0IHg9IjM0IiB5PSI0MCIgd2lkdGg9IjExMiIgaGVpZ2h0PSIxMDAiIHJ4PSI4IiBmaWxsPSIjZjVlZmUxIiBzdHJva2U9IiNiODg2M2IiIHN0cm9rZS13aWR0aD0iMyIvPjxsaW5lIHgxPSIzNCIgeTE9IjY0IiB4Mj0iMTQ2IiB5Mj0iNjQiIHN0cm9rZT0iI2UyZDZiOCIgc3Ryb2tlLXdpZHRoPSIyIi8+PGxpbmUgeDE9IjUwIiB5MT0iODIiIHgyPSIxMzAiIHkyPSI4MiIgc3Ryb2tlPSIjZDhjOWEzIiBzdHJva2Utd2lkdGg9IjMiLz48bGluZSB4MT0iNTAiIHkxPSI5OCIgeDI9IjExMiIgeTI9Ijk4IiBzdHJva2U9IiNkOGM5YTMiIHN0cm9rZS13aWR0aD0iMyIvPjxsaW5lIHgxPSI1MCIgeTE9IjExNCIgeDI9IjEyMCIgeTI9IjExNCIgc3Ryb2tlPSIjZDhjOWEzIiBzdHJva2Utd2lkdGg9IjMiLz48Y2lyY2xlIGN4PSIxMjgiIGN5PSIxMjAiIHI9IjIwIiBmaWxsPSIjYjg4NjNiIi8+PHRleHQgeD0iMTI4IiB5PSIxMjciIGZvbnQtZmFtaWx5PSJHZW9yZ2lhLCBzZXJpZiIgZm9udC1zaXplPSIyMCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzJhMWMwNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+4Li/PC90ZXh0Pjwvc3ZnPg==",
+      "sizes": "180x180",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
