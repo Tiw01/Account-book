@@ -113,6 +113,18 @@
   .lb-pnav { display: flex; align-items: center; gap: 4px; margin-left: auto; }
   .lb-pnav button { border: 1px solid var(--paper-line); background: var(--card-bg); width: 28px; height: 28px; border-radius: 7px; cursor: pointer; font-size: 13px; color: var(--teal); }
   .lb-pnav button:disabled { opacity: .35; cursor: default; }
+  .lb-customrange { display: flex; align-items: center; gap: 8px; margin-left: auto; font-size: 12px; color: var(--muted); }
+  .lb-customrange input[type="date"] { border: 1px solid var(--paper-line); background: var(--card-bg); color: var(--ink); border-radius: 7px; padding: 5px 8px; font-family: inherit; font-size: 12px; }
+  .lb-compare-box { background: var(--card-bg); border: 1px solid var(--paper-line); border-radius: 10px; padding: 12px 14px; margin-bottom: 20px; }
+  .lb-compare-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--paper-line); }
+  .lb-compare-row:last-of-type { border-bottom: none; }
+  .lb-compare-name { font-size: 12.5px; color: var(--ink); font-weight: 600; flex: 1; }
+  .lb-compare-amt { font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 700; }
+  .lb-delta { font-size: 11.5px; font-weight: 700; min-width: 62px; text-align: right; }
+  .lb-delta.good { color: var(--green); }
+  .lb-delta.bad { color: var(--red); }
+  .lb-delta.flat { color: var(--muted); font-weight: 600; }
+  .lb-compare-sub { font-size: 11px; color: var(--muted); text-align: center; margin-top: 8px; }
   .lb-plabel { font-size: 12.5px; font-weight: 700; color: var(--ink); padding: 0 4px; white-space: nowrap; }
 
   .lb-dash { padding: 18px 22px 22px; }
@@ -181,6 +193,8 @@
   .lb-toggle button.active[data-type="expense"] { background: var(--red); color: #fff; }
   .lb-toggle.necessary button.active[data-nec="1"] { background: var(--teal); color: #fff; }
   .lb-toggle.necessary button.active[data-nec="0"] { background: var(--gold); color: #2a1c04; }
+  .rec-toggle button.active[data-recnec="1"] { background: var(--teal); color: #fff; }
+  .rec-toggle button.active[data-recnec="0"] { background: var(--gold); color: #2a1c04; }
 
   .lb-submitrow { grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 4px; }
   .lb-submit { flex: 1; padding: 11px; border: none; border-radius: 8px; background: var(--gold); color: #2a1c04; font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer; transition: filter .15s; }
@@ -188,9 +202,22 @@
   .lb-submit:active { filter: brightness(0.96); }
   .lb-cancel-edit { padding: 11px 16px; border: 1px solid var(--paper-line); background: var(--card-bg); border-radius: 8px; color: var(--muted); font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
 
-  .lb-list-wrap { padding: 4px 0 8px; max-height: 420px; overflow-y: auto; }
-  .lb-day-group { padding: 10px 22px 2px; }
-  .lb-day-label { font-size: 11.5px; color: var(--muted); font-weight: 700; letter-spacing: .03em; margin-bottom: 6px; }
+  .lb-days-toolbar { display: flex; gap: 8px; padding: 6px 22px 0; }
+  .lb-days-toolbtn { border: 1px solid var(--paper-line); background: var(--card-bg); color: var(--teal); font-family: inherit; font-weight: 700; font-size: 11.5px; padding: 5px 10px; border-radius: 20px; cursor: pointer; }
+  .lb-days-toolbtn:hover { background: var(--hover-bg); }
+
+  .lb-list-wrap { padding: 4px 0 8px; max-height: 480px; overflow-y: auto; }
+  .lb-day-group { padding: 4px 14px; }
+  .lb-day-folder { width: 100%; display: flex; align-items: center; gap: 8px; background: var(--card-bg); border: 1px solid var(--paper-line); border-radius: 10px; padding: 9px 12px; cursor: pointer; font-family: inherit; text-align: left; }
+  .lb-day-folder:hover { background: var(--hover-bg); }
+  .lb-day-group.open .lb-day-folder { border-radius: 10px 10px 0 0; border-bottom-color: transparent; }
+  .lb-day-icon { font-size: 14px; flex: none; }
+  .lb-day-label { font-size: 12.5px; color: var(--ink); font-weight: 700; letter-spacing: .02em; flex: none; }
+  .lb-day-meta { font-size: 11px; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-day-meta-income { color: var(--green); font-weight: 700; }
+  .lb-day-meta-expense { color: var(--red); font-weight: 700; }
+  .lb-day-chevron { font-size: 11px; color: var(--muted); flex: none; }
+  .lb-day-items { border: 1px solid var(--paper-line); border-top: none; border-radius: 0 0 10px 10px; padding: 2px 12px 0; background: var(--paper); }
   .lb-entry { display: grid; grid-template-columns: 1fr auto 26px; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--paper-line); cursor: pointer; border-radius: 6px; }
   .lb-entry:hover { background: var(--hover-bg); }
   .lb-entry-main { min-width: 0; }
@@ -385,6 +412,8 @@ const googleProvider = new GoogleAuthProvider();
   let necessary = 1;
   let period = 'month';
   let offset = 0;
+  let customStart = null;
+  let customEnd = null;
   let view = 'dashboard';
   let editingId = null;
   let addCatMode = false;
@@ -400,6 +429,7 @@ const googleProvider = new GoogleAuthProvider();
   let unlocked = false;
   let authLoading = true;
   let dismissedDue = new Set();
+  let expandedDays = null;
   let recForm = { name: '', type: 'expense', category: '', amount: '', day: 1, necessary: 1 };
   let goalForm = { name: '', target: '', due: '' };
 
@@ -451,6 +481,14 @@ const googleProvider = new GoogleAuthProvider();
       const y = now.getFullYear() + offset;
       return { start: `${y}-01-01`, end: `${y}-12-31`, label: `พ.ศ. ${y+543}` };
     }
+    if (period === 'custom') {
+      const today = toISO(new Date());
+      let s = customStart || today;
+      let e = customEnd || today;
+      if (s > e) { const t = s; s = e; e = t; }
+      const label = s === e ? thaiDate(s) : `${thaiDate(s)} – ${thaiDate(e)}`;
+      return { start: s, end: e, label };
+    }
     return { start: null, end: null, label: 'ทั้งหมด' };
   }
 
@@ -470,13 +508,27 @@ const googleProvider = new GoogleAuthProvider();
       const base = new Date(now.getFullYear(), now.getMonth()-i, 1);
       const start = toISO(new Date(base.getFullYear(), base.getMonth(), 1));
       const end = toISO(new Date(base.getFullYear(), base.getMonth()+1, 0));
-      let inc = 0, exp = 0;
+      let inc = 0, exp = 0, nec = 0, unnec = 0;
       for (const e of entries) {
-        if (e.date >= start && e.date <= end) { if (e.type === 'income') inc += e.amount; else exp += e.amount; }
+        if (e.date >= start && e.date <= end) {
+          if (e.type === 'income') inc += e.amount;
+          else { exp += e.amount; if (e.necessary === false) unnec += e.amount; else nec += e.amount; }
+        }
       }
-      months.push({ label: MONTHS_SHORT[base.getMonth()], income: inc, expense: exp });
+      months.push({ label: MONTHS_SHORT[base.getMonth()], fullLabel: `${MONTHS_FULL[base.getMonth()]} ${base.getFullYear()+543}`, income: inc, expense: exp, nec, unnec });
     }
     return months;
+  }
+
+  function deltaHtml(curVal, prevVal, goodWhenDown){
+    if (prevVal === 0 && curVal === 0) return `<span class="lb-delta flat">– ไม่มีข้อมูล</span>`;
+    if (prevVal === 0) return `<span class="lb-delta ${goodWhenDown ? 'bad' : 'good'}">ใหม่ (เดือนก่อนไม่มี)</span>`;
+    const diff = curVal - prevVal;
+    const diffPct = Math.abs(diff / prevVal * 100);
+    if (diff === 0) return `<span class="lb-delta flat">– เท่าเดิม</span>`;
+    const up = diff > 0;
+    const isGood = goodWhenDown ? !up : up;
+    return `<span class="lb-delta ${isGood ? 'good' : 'bad'}">${up ? '▲' : '▼'} ${pct(diffPct)}%</span>`;
   }
 
   function trendSvg(months){
@@ -645,15 +697,22 @@ const googleProvider = new GoogleAuthProvider();
           <button data-period="week" class="${period==='week'?'active':''}">สัปดาห์</button>
           <button data-period="month" class="${period==='month'?'active':''}">เดือน</button>
           <button data-period="year" class="${period==='year'?'active':''}">ปี</button>
+          <button data-period="custom" class="${period==='custom'?'active':''}">กำหนดเอง</button>
           <button data-period="all" class="${period==='all'?'active':''}">ทั้งหมด</button>
         </div>
-        ${period !== 'all' ? `
+        ${period === 'custom' ? `
+          <div class="lb-customrange">
+            <input type="date" id="lb-custom-start" value="${customStart || range.start || ''}">
+            <span>ถึง</span>
+            <input type="date" id="lb-custom-end" value="${customEnd || range.end || ''}">
+          </div>
+        ` : (period !== 'all' ? `
           <div class="lb-pnav">
             <button id="lb-prev" title="ก่อนหน้า">‹</button>
             <span class="lb-plabel">${range.label}</span>
             <button id="lb-next" ${futureDisabled ? 'disabled' : ''} title="ถัดไป">›</button>
           </div>
-        ` : ''}
+        ` : '')}
       </div>
     `;
   }
@@ -718,6 +777,7 @@ const googleProvider = new GoogleAuthProvider();
 
     if (view === 'dashboard') {
       const trend = monthlyTrend();
+      const cmp = { cur: trend[trend.length-1], prev: trend[trend.length-2] };
       const budgetPctUsed = (period === 'month' && budget) ? Math.min(100, (pExpense/budget*100)) : null;
       const budgetColor = budgetPctUsed === null ? '' : (budgetPctUsed >= 100 ? 'var(--red)' : budgetPctUsed >= 80 ? 'var(--gold)' : 'var(--green)');
       const dueItems = recurringDueList();
@@ -730,7 +790,7 @@ const googleProvider = new GoogleAuthProvider();
               <div class="rec-due-title">🔔 รายการประจำที่ถึงกำหนดเดือนนี้ (${dueItems.length})</div>
               ${dueItems.map(r => `
                 <div class="rec-due-row">
-                  <span style="font-size:12.5px">${escapeHtml(r.name)} · ${fmt(r.amount)} ฿</span>
+                  <span style="font-size:12.5px">${escapeHtml(r.name)} · ${fmt(r.amount)} ฿ ${r.type==='expense' ? (r.necessary===false ? '<span class="lb-badge unnec">ไม่จำเป็น</span>' : '<span class="lb-badge nec">จำเป็น</span>') : ''}</span>
                   <button class="rec-due-add" data-recid="${r.id}">+ บันทึกเลย</button>
                 </div>
               `).join('')}
@@ -742,6 +802,14 @@ const googleProvider = new GoogleAuthProvider();
             <div class="lb-card c-expense"><div class="lb-card-label">🧾 รายจ่ายทั้งหมด</div><div class="lb-card-amt">${fmt(pExpense)} ฿</div></div>
             <div class="lb-card c-nec"><div class="lb-card-label">✅ รายจ่ายจำเป็น</div><div class="lb-card-amt">${fmt(pNec)} ฿</div><div class="lb-card-sub">${pct(necPct)}% ของรายจ่าย</div></div>
             <div class="lb-card c-unnec"><div class="lb-card-label">🛍️ รายจ่ายไม่จำเป็น</div><div class="lb-card-amt">${fmt(pUnnec)} ฿</div><div class="lb-card-sub">${pct(unnecPct)}% ของรายจ่าย</div></div>
+          </div>
+
+          <div class="lb-dash-sectitle">เปรียบเทียบเดือนนี้กับเดือนที่แล้ว</div>
+          <div class="lb-compare-box">
+            <div class="lb-compare-row"><span class="lb-compare-name">รายรับ</span><span class="lb-compare-amt">${fmt(cmp.cur.income)} ฿</span>${deltaHtml(cmp.cur.income, cmp.prev.income, false)}</div>
+            <div class="lb-compare-row"><span class="lb-compare-name">รายจ่ายรวม</span><span class="lb-compare-amt">${fmt(cmp.cur.expense)} ฿</span>${deltaHtml(cmp.cur.expense, cmp.prev.expense, true)}</div>
+            <div class="lb-compare-row"><span class="lb-compare-name">รายจ่ายไม่จำเป็น</span><span class="lb-compare-amt">${fmt(cmp.cur.unnec)} ฿</span>${deltaHtml(cmp.cur.unnec, cmp.prev.unnec, true)}</div>
+            <div class="lb-compare-sub">${cmp.prev.fullLabel} → ${cmp.cur.fullLabel}</div>
           </div>
 
           ${period === 'month' ? `
@@ -938,6 +1006,7 @@ const googleProvider = new GoogleAuthProvider();
       }
       const descending = [...listSource].reverse();
       const groups = groupByDate(descending);
+      if (expandedDays === null) { expandedDays = new Set([todayStr()]); }
       const allCatsInPeriod = Array.from(new Set(periodEntries.map(e => e.category))).sort();
 
       bodyHtml = `
@@ -948,17 +1017,25 @@ const googleProvider = new GoogleAuthProvider();
           <form class="inv-form" id="rec-add-form">
             <input type="text" id="rec-name" placeholder="ชื่อรายการ เช่น ค่าเช่าห้อง" maxlength="30" required>
             <select id="rec-type">
-              <option value="expense">รายจ่าย</option>
-              <option value="income">รายรับ</option>
+              <option value="expense" ${recForm.type==='expense'?'selected':''}>รายจ่าย</option>
+              <option value="income" ${recForm.type==='income'?'selected':''}>รายรับ</option>
             </select>
             <input type="number" id="rec-amount" placeholder="จำนวนเงิน" min="0" step="0.01" required>
             <input type="number" id="rec-day" placeholder="วันที่ (1-28)" min="1" max="28" value="1" style="max-width:90px">
+            ${recForm.type === 'expense' ? `
+            <div class="lb-field full" style="grid-column:1/-1">
+              <label style="font-size:11.5px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px">รายการนี้จำเป็นไหม</label>
+              <div class="lb-toggle rec-toggle">
+                <button type="button" data-recnec="1" class="${recForm.necessary===1?'active':''}">จำเป็น</button>
+                <button type="button" data-recnec="0" class="${recForm.necessary===0?'active':''}">ไม่จำเป็น</button>
+              </div>
+            </div>` : ''}
             <button type="submit">+ เพิ่ม</button>
           </form>
           ${recurring.length ? recurring.map(r => `
             <div class="rec-card">
               <div class="rec-info">
-                <div class="rec-name">${escapeHtml(r.name)}</div>
+                <div class="rec-name">${escapeHtml(r.name)} ${r.type==='expense' ? (r.necessary===false ? '<span class="lb-badge unnec">ไม่จำเป็น</span>' : '<span class="lb-badge nec">จำเป็น</span>') : ''}</div>
                 <div class="rec-day-edit">
                   <span>เก็บทุกวันที่</span>
                   <input type="number" class="rec-day-input" data-recid="${r.id}" min="1" max="28" value="${r.day}">
@@ -1033,31 +1110,51 @@ const googleProvider = new GoogleAuthProvider();
           </select>
         </div>
 
+        ${groups.length > 0 ? `
+          <div class="lb-days-toolbar">
+            <button type="button" id="lb-expand-all" class="lb-days-toolbtn">เปิดทั้งหมด</button>
+            <button type="button" id="lb-collapse-all" class="lb-days-toolbtn">ปิดทั้งหมด</button>
+          </div>
+        ` : ''}
+
         <div class="lb-list-wrap">
           ${groups.length === 0 ? `
             <div class="lb-empty"><b>ไม่มีรายการ</b>ลองเปลี่ยนช่วงเวลา หรือคำค้นหาดู</div>
-          ` : groups.map(g => `
-            <div class="lb-day-group">
-              <div class="lb-day-label">${thaiDate(g.date)}</div>
-              ${g.items.map(e => `
-                <div class="lb-entry" data-id="${e.id}">
-                  <div class="lb-entry-main">
-                    <div class="lb-entry-cat-row">
-                      <span class="lb-entry-cat">${escapeHtml(e.category)}</span>
-                      ${e.type === 'expense' ? (e.necessary === false ? '<span class="lb-badge unnec">ไม่จำเป็น</span>' : '<span class="lb-badge nec">จำเป็น</span>') : ''}
-                      ${e.payment ? `<span class="lb-badge pay">${escapeHtml(e.payment)}</span>` : ''}
+          ` : groups.map(g => {
+            const isOpen = expandedDays.has(g.date);
+            const dayIncome = g.items.filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0);
+            const dayExpense = g.items.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
+            return `
+            <div class="lb-day-group ${isOpen?'open':''}">
+              <button type="button" class="lb-day-folder" data-day="${g.date}">
+                <span class="lb-day-icon">${isOpen ? '📂' : '📁'}</span>
+                <span class="lb-day-label">${thaiDate(g.date)}</span>
+                <span class="lb-day-meta">${g.items.length} รายการ${dayIncome ? ` · <span class="lb-day-meta-income">+${fmt(dayIncome)}</span>` : ''}${dayExpense ? ` · <span class="lb-day-meta-expense">-${fmt(dayExpense)}</span>` : ''}</span>
+                <span class="lb-day-chevron">${isOpen ? '▾' : '▸'}</span>
+              </button>
+              ${isOpen ? `
+              <div class="lb-day-items">
+                ${g.items.map(e => `
+                  <div class="lb-entry" data-id="${e.id}">
+                    <div class="lb-entry-main">
+                      <div class="lb-entry-cat-row">
+                        <span class="lb-entry-cat">${escapeHtml(e.category)}</span>
+                        ${e.type === 'expense' ? (e.necessary === false ? '<span class="lb-badge unnec">ไม่จำเป็น</span>' : '<span class="lb-badge nec">จำเป็น</span>') : ''}
+                        ${e.payment ? `<span class="lb-badge pay">${escapeHtml(e.payment)}</span>` : ''}
+                      </div>
+                      ${e.note ? `<div class="lb-entry-note">${escapeHtml(e.note)}</div>` : ''}
                     </div>
-                    ${e.note ? `<div class="lb-entry-note">${escapeHtml(e.note)}</div>` : ''}
+                    <div>
+                      <div class="lb-entry-amt ${e.type}">${e.type === 'income' ? '+' : '-'}${fmt(e.amount)}</div>
+                      <div class="lb-entry-running">คงเหลือ ${fmt(e.running)}</div>
+                    </div>
+                    <button class="lb-del" data-id="${e.id}" title="ลบรายการ" aria-label="ลบรายการ">✕</button>
                   </div>
-                  <div>
-                    <div class="lb-entry-amt ${e.type}">${e.type === 'income' ? '+' : '-'}${fmt(e.amount)}</div>
-                    <div class="lb-entry-running">คงเหลือ ${fmt(e.running)}</div>
-                  </div>
-                  <button class="lb-del" data-id="${e.id}" title="ลบรายการ" aria-label="ลบรายการ">✕</button>
-                </div>
-              `).join('')}
+                `).join('')}
+              </div>` : ''}
             </div>
-          `).join('')}
+          `;
+          }).join('')}
         </div>
       `;
     }
@@ -1160,8 +1257,19 @@ const googleProvider = new GoogleAuthProvider();
     }
 
     root.querySelectorAll('.lb-maintabs button').forEach(btn => btn.addEventListener('click', () => { view = btn.dataset.view; editingId = null; render(); }));
-    root.querySelectorAll('.lb-ptabs button').forEach(btn => btn.addEventListener('click', () => { period = btn.dataset.period; offset = 0; render(); }));
+    root.querySelectorAll('.lb-ptabs button').forEach(btn => btn.addEventListener('click', () => {
+      period = btn.dataset.period; offset = 0;
+      if (period === 'custom' && !customStart && !customEnd) {
+        const now = new Date();
+        customStart = toISO(new Date(now.getFullYear(), now.getMonth(), 1));
+        customEnd = toISO(now);
+      }
+      render();
+    }));
     const prevBtn = root.querySelector('#lb-prev'); const nextBtn = root.querySelector('#lb-next');
+    const csInput = root.querySelector('#lb-custom-start'); const ceInput = root.querySelector('#lb-custom-end');
+    if (csInput) csInput.addEventListener('change', (ev) => { customStart = ev.target.value; render(); });
+    if (ceInput) ceInput.addEventListener('change', (ev) => { customEnd = ev.target.value; render(); });
     if (prevBtn) prevBtn.addEventListener('click', () => { offset -= 1; render(); });
     if (nextBtn) nextBtn.addEventListener('click', () => { if (offset < 0) { offset += 1; render(); } });
 
@@ -1176,7 +1284,6 @@ const googleProvider = new GoogleAuthProvider();
     if (view === 'dashboard') {
       const bInput = root.querySelector('#lb-budget-input');
       const bSave = root.querySelector('#lb-budget-save');
-      if (bInput) bInput.addEventListener('input', rerenderPreserveFocus);
       if (bSave) bSave.addEventListener('click', async () => {
         const v = parseFloat(root.querySelector('#lb-budget-input').value);
         budget = (v && v > 0) ? v : null;
@@ -1190,7 +1297,7 @@ const googleProvider = new GoogleAuthProvider();
           id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
           date: todayStr(), type: r.type, amount: r.amount, category: r.category || 'อื่นๆ',
           note: r.name, payment: null,
-          necessary: r.type === 'expense' ? true : null,
+          necessary: r.type === 'expense' ? (r.necessary !== false) : null,
           recurringId: r.id
         });
         await saveEntries();
@@ -1231,7 +1338,6 @@ const googleProvider = new GoogleAuthProvider();
     if (view === 'invest') {
       const rateInput = root.querySelector('#inv-rate-input');
       const rateSave = root.querySelector('#inv-rate-save');
-      if (rateInput) rateInput.addEventListener('input', rerenderPreserveFocus);
       if (rateSave) rateSave.addEventListener('click', async () => {
         const v = parseFloat(root.querySelector('#inv-rate-input').value);
         usdRate = (v && v > 0) ? v : 36;
@@ -1302,6 +1408,9 @@ const googleProvider = new GoogleAuthProvider();
 
     if (view === 'record') {
       const recAddForm = root.querySelector('#rec-add-form');
+      const recTypeSel = root.querySelector('#rec-type');
+      if (recTypeSel) recTypeSel.addEventListener('change', (ev) => { recForm.type = ev.target.value; render(); });
+      root.querySelectorAll('.rec-toggle button').forEach(btn => btn.addEventListener('click', () => { recForm.necessary = Number(btn.dataset.recnec); render(); }));
       if (recAddForm) recAddForm.addEventListener('submit', async (ev) => {
         ev.preventDefault();
         const name = root.querySelector('#rec-name').value.trim();
@@ -1309,7 +1418,8 @@ const googleProvider = new GoogleAuthProvider();
         const amount = parseFloat(root.querySelector('#rec-amount').value);
         const day = Math.min(28, Math.max(1, parseInt(root.querySelector('#rec-day').value) || 1));
         if (!name || !amount || amount <= 0) return;
-        recurring.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, type: rtype, amount, day, category: 'อื่นๆ', active: true });
+        recurring.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,6), name, type: rtype, amount, day, category: 'อื่นๆ', active: true, necessary: rtype === 'expense' ? (recForm.necessary === 1) : null });
+        recForm = { name: '', type: 'expense', category: '', amount: '', day: 1, necessary: 1 };
         await saveRecurring();
         render();
       });
@@ -1318,6 +1428,27 @@ const googleProvider = new GoogleAuthProvider();
         await saveRecurring();
         render();
       }));
+      root.querySelectorAll('.lb-day-folder').forEach(btn => btn.addEventListener('click', () => {
+        const d = btn.dataset.day;
+        if (expandedDays.has(d)) expandedDays.delete(d); else expandedDays.add(d);
+        render();
+      }));
+      const expandAllBtn = root.querySelector('#lb-expand-all');
+      const collapseAllBtn = root.querySelector('#lb-collapse-all');
+      if (expandAllBtn) expandAllBtn.addEventListener('click', () => {
+        let vis = periodEntries;
+        if (filterCategory) vis = vis.filter(e => e.category === filterCategory);
+        if (searchText.trim()) {
+          const q = searchText.trim().toLowerCase();
+          vis = vis.filter(e => (e.category||'').toLowerCase().includes(q) || (e.note||'').toLowerCase().includes(q));
+        }
+        expandedDays = new Set(vis.map(e => e.date));
+        render();
+      });
+      if (collapseAllBtn) collapseAllBtn.addEventListener('click', () => {
+        expandedDays = new Set();
+        render();
+      });
       root.querySelectorAll('.rec-day-save').forEach(btn => btn.addEventListener('click', async () => {
         const rid = btn.dataset.recid;
         const input = root.querySelector(`.rec-day-input[data-recid="${rid}"]`);
@@ -1329,7 +1460,7 @@ const googleProvider = new GoogleAuthProvider();
         render();
       }));
 
-      root.querySelectorAll('.lb-toggle:not(.necessary) button').forEach(btn => btn.addEventListener('click', () => { type = btn.dataset.type; render(); }));
+      root.querySelectorAll('.lb-toggle:not(.necessary):not(.rec-toggle) button').forEach(btn => btn.addEventListener('click', () => { type = btn.dataset.type; render(); }));
       root.querySelectorAll('.lb-toggle.necessary button').forEach(btn => btn.addEventListener('click', () => { necessary = Number(btn.dataset.nec); render(); }));
 
       root.querySelector('#lb-addcat-toggle').addEventListener('click', () => { addCatMode = !addCatMode; render(); });
