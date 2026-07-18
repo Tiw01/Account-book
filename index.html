@@ -125,6 +125,20 @@
   .lb-delta.bad { color: var(--red); }
   .lb-delta.flat { color: var(--muted); font-weight: 600; }
   .lb-compare-sub { font-size: 11px; color: var(--muted); text-align: center; margin-top: 8px; }
+  .lb-necdetail { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .lb-necdetail-col { background: var(--card-bg); border: 1px solid var(--paper-line); border-radius: 10px; overflow: hidden; }
+  .lb-necdetail-head { font-size: 12px; font-weight: 700; padding: 8px 10px; border-bottom: 1px solid var(--paper-line); }
+  .lb-necdetail-head.nec { color: var(--teal); }
+  .lb-necdetail-head.unnec { color: var(--gold); }
+  .lb-necdetail-list { max-height: 220px; overflow-y: auto; }
+  .lb-necdetail-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--paper-line); }
+  .lb-necdetail-row:last-child { border-bottom: none; }
+  .lb-necdetail-name { display: flex; flex-direction: column; min-width: 0; }
+  .lb-necdetail-name span:first-child { font-size: 12px; font-weight: 600; color: var(--ink); }
+  .lb-necdetail-note { font-size: 10.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-necdetail-amt { font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 700; color: var(--red); white-space: nowrap; flex: none; }
+  .lb-necdetail-empty { padding: 12px 10px; font-size: 11.5px; color: var(--muted); text-align: center; }
+  @media (max-width: 480px) { .lb-necdetail { grid-template-columns: 1fr; } }
   .lb-plabel { font-size: 12.5px; font-weight: 700; color: var(--ink); padding: 0 4px; white-space: nowrap; }
 
   .lb-dash { padding: 18px 22px 22px; }
@@ -768,6 +782,8 @@ const googleProvider = new GoogleAuthProvider();
     const maxCat = catList.length ? catList[0][1] : 0;
     const necPct = pExpense > 0 ? (pNec/pExpense*100) : 0;
     const unnecPct = pExpense > 0 ? (pUnnec/pExpense*100) : 0;
+    const necEntries = periodEntries.filter(e => e.type === 'expense' && e.necessary !== false).sort((a,b) => b.amount - a.amount);
+    const unnecEntries = periodEntries.filter(e => e.type === 'expense' && e.necessary === false).sort((a,b) => b.amount - a.amount);
     const streak = computeStreak();
 
     const catOptions = catsFor(type).map(c => `<option value="${escapeHtml(c)}" ${editingEntryCat===c?'selected':''}>${escapeHtml(c)}</option>`).join('');
@@ -836,6 +852,36 @@ const googleProvider = new GoogleAuthProvider();
             <div class="lb-splitlegend">
               <span><i style="background:var(--teal)"></i>จำเป็น ${pct(necPct)}%</span>
               <span><i style="background:var(--gold)"></i>ไม่จำเป็น ${pct(unnecPct)}%</span>
+            </div>
+            <div class="lb-necdetail">
+              <div class="lb-necdetail-col">
+                <div class="lb-necdetail-head nec">✅ จำเป็น · ${fmt(pNec)} ฿</div>
+                <div class="lb-necdetail-list">
+                  ${necEntries.length ? necEntries.map(e => `
+                    <div class="lb-necdetail-row">
+                      <div class="lb-necdetail-name">
+                        <span>${escapeHtml(e.category)}</span>
+                        ${e.note ? `<span class="lb-necdetail-note">${escapeHtml(e.note)}</span>` : ''}
+                      </div>
+                      <span class="lb-necdetail-amt">${fmt(e.amount)}</span>
+                    </div>
+                  `).join('') : `<div class="lb-necdetail-empty">ไม่มีรายการ</div>`}
+                </div>
+              </div>
+              <div class="lb-necdetail-col">
+                <div class="lb-necdetail-head unnec">🛍️ ไม่จำเป็น · ${fmt(pUnnec)} ฿</div>
+                <div class="lb-necdetail-list">
+                  ${unnecEntries.length ? unnecEntries.map(e => `
+                    <div class="lb-necdetail-row">
+                      <div class="lb-necdetail-name">
+                        <span>${escapeHtml(e.category)}</span>
+                        ${e.note ? `<span class="lb-necdetail-note">${escapeHtml(e.note)}</span>` : ''}
+                      </div>
+                      <span class="lb-necdetail-amt">${fmt(e.amount)}</span>
+                    </div>
+                  `).join('') : `<div class="lb-necdetail-empty">ไม่มีรายการ</div>`}
+                </div>
+              </div>
             </div>
             <div class="lb-dash-sectitle">สัดส่วนรายจ่ายตามหมวดหมู่</div>
             ${pieSvg(catList, pExpense)}
